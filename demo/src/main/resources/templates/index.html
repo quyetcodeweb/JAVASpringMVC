@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title th:text="#{title}">Danh sách sản phẩm</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans">
+
+  <!-- Header -->
+  <header class="flex justify-between items-center bg-white shadow p-4">
+    <div class="flex items-center space-x-2">
+      <img src="/images/flag_vn.png" alt="Logo" class="w-10 h-10 rounded-full">
+      <h1 class="text-xl font-bold text-gray-800" th:text="#{title}">Danh sách sản phẩm</h1>
+    </div>
+
+    <!-- Ngôn ngữ -->
+    <div class="relative">
+      <button id="langToggle" class="flex items-center space-x-2 border rounded-lg px-3 py-1 bg-gray-50 hover:bg-gray-100">
+        <img th:src="${#locale.language == 'en'} ? '/images/flag_us.png' : '/images/flag_vn.png'" alt="flag" class="w-6 h-4">
+        <span th:text="${#locale.language == 'en'} ? 'English' : 'Tiếng Việt'"></span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      <div id="langMenu" class="hidden absolute right-0 mt-2 bg-white border rounded-lg shadow-md z-50 w-36">
+        <a href="/change-lang?lang=vi" class="flex items-center px-3 py-2 hover:bg-gray-100">🇻🇳 <span class="ml-2">Tiếng Việt</span></a>
+        <a href="/change-lang?lang=en" class="flex items-center px-3 py-2 hover:bg-gray-100">🇺🇸 <span class="ml-2">English</span></a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Nút thêm sản phẩm -->
+  <div class="max-w-6xl mx-auto mt-6 flex justify-end">
+    <button onclick="openAddForm()" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700">
+      ➕ <span th:text="#{addbtn}">Thêm sản phẩm</span>
+    </button>
+  </div>
+
+  <!-- Danh sách sản phẩm -->
+  <main class="max-w-6xl mx-auto mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+  <div th:each="p : ${products}" class="bg-white rounded-2xl shadow hover:shadow-lg p-4 transition">
+    <img th:src="@{${p.img}}" alt="Ảnh sản phẩm" class="w-full h-48 object-cover rounded-xl mb-3">
+    
+    <!-- ✅ Tên sản phẩm -->
+    <h3 class="font-semibold text-lg text-gray-800" th:text="${p.name}">Tên sản phẩm</h3>
+
+    <p class="text-gray-600 text-sm mb-2" th:text="${p.description}">Mô tả sản phẩm</p>
+
+    <!-- ✅ Hiển thị giá theo ngôn ngữ -->
+    <span th:if="${locale == 'vi'}" 
+          class="text-green-600 font-bold"
+          th:text="${#numbers.formatDecimal(p.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">
+      100.000 ₫
+    </span>
+
+    <span th:if="${locale == 'en'}"
+          class="text-green-600 font-bold"
+          th:text="'$' + ${#numbers.formatDecimal(p.price, 1, 'POINT', 2, 'COMMA')}">
+      $5.00
+    </span>
+
+    <!-- ✅ Ghi chú -->
+    <div th:if="${p.note != null}"
+         class="mt-2 text-xs bg-yellow-100 text-yellow-700 inline-block px-2 py-1 rounded-full">
+      📝 <span th:text="${p.note}"></span>
+    </div>
+  </div>
+</main>
+
+
+  <!-- Form thêm sản phẩm -->
+  <div id="addForm" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+  <form th:action="@{/products/add}" method="post" enctype="multipart/form-data"
+      class="bg-white p-6 rounded-xl shadow-xl w-96 space-y-4">
+
+  <h2 class="text-xl font-bold text-center text-gray-700"
+      th:text="${locale == 'en'} ? 'Add New Product' : 'Thêm sản phẩm mới'">
+    Thêm sản phẩm mới
+  </h2>
+
+  <!-- Tên sản phẩm -->
+  <div>
+    <label class="block mb-1" th:text="${locale == 'en'} ? 'Product Name' : 'Tên sản phẩm'">Tên sản phẩm</label>
+    <input type="text" name="name" required class="border w-full p-2 rounded-lg">
+  </div>
+
+  <!-- Giá -->
+  <div>
+    <label class="block mb-1" th:text="${locale == 'en'} ? 'Price' : 'Giá'">Giá</label>
+    <input type="number" name="price" required class="border w-full p-2 rounded-lg">
+  </div>
+
+  <!-- Ảnh -->
+  <div>
+  <label class="block mb-1" th:text="${locale == 'en'} ? 'Image' : 'Ảnh sản phẩm'">Ảnh sản phẩm</label>
+  
+  <div class="flex items-center space-x-2">
+    <button type="button" 
+            class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+            onclick="document.getElementById('imgFile').click()"
+            th:text="${locale == 'en'} ? 'Select File' : 'Chọn tệp'">Chọn tệp</button>
+    <span id="fileName" class="text-gray-600 text-sm">No file chosen</span>
+  </div>
+
+  <input type="file" name="imgFile" id="imgFile" accept="image/*" class="hidden"
+         onchange="document.getElementById('fileName').textContent = this.files[0]?.name || 'No file chosen'">
+</div>
+
+
+  <!-- Ghi chú -->
+  <div>
+    <label class="block mb-1" th:text="${locale == 'en'} ? 'Note' : 'Ghi chú'">Ghi chú</label>
+    <input type="text" name="note" class="border w-full p-2 rounded-lg">
+  </div>
+
+  <!-- Nút Hủy / Lưu -->
+  <div class="flex justify-between mt-4">
+    <button type="button" onclick="closeAddForm()"
+            class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+            th:text="${locale == 'en'} ? 'Cancel' : 'Hủy'">Hủy</button>
+    <button type="submit"
+            class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+            th:text="${locale == 'en'} ? 'Save' : 'Lưu'">Lưu</button>
+  </div>
+</form>
+</div>
+  <script>
+    function openAddForm() {
+      document.getElementById('addForm').classList.remove('hidden');
+    }
+    function closeAddForm() {
+      document.getElementById('addForm').classList.add('hidden');
+    }
+    const toggle = document.getElementById('langToggle');
+    const menu = document.getElementById('langMenu');
+    toggle.addEventListener('click', () => menu.classList.toggle('hidden'));
+    document.addEventListener('click', (e) => {
+      if (!toggle.contains(e.target)) menu.classList.add('hidden');
+    });
+  </script>
+
+</body>
+</html>
